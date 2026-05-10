@@ -1,0 +1,18 @@
+{
+  "name": "hightide",
+  "version": "1.0.0",
+  "description": "Automated DorkFi looping and leverage service",
+  "type": "module",
+  "main": "index.mjs",
+  "scripts": {
+    "start": "node index.mjs",
+    "open":  "node cli.mjs open",
+    "unwind":"node cli.mjs unwind",
+    "status":"node cli.mjs status"
+  },
+  "dependencies": {
+    "algosdk": "^3.0.0",
+    "express": "^4.18.2",
+    "dotenv":  "^16.4.5"
+  }
+}
