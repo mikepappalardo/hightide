@@ -10,7 +10,19 @@
 import algosdk from 'algosdk';
 import { calculateLoop, calculateUnwindSteps } from './lib/calculator.mjs';
 import { getMarket, getAccount, getAlgod, deposit, borrow, repay, withdraw, POOLS, MARKET_IDS } from './lib/dorkfi.mjs';
-import { getSwapQuote, executeSwap, makeAlgoSigner } from './lib/humble.mjs';
+import { getSwapQuote as humbleQuote, executeSwap as humbleSwap, makeAlgoSigner as humbleSigner } from './lib/humble.mjs';
+import { getSwapQuote as tinymanQuote, executeSwap as tinymanSwap, makeAlgoSigner as tinymanSigner, ASSETS as TINYMAN_ASSETS } from './lib/tinyman.mjs';
+
+// Route swap functions by chain
+function getSwapQuote(args) {
+  return args.chain === 'algorand' ? tinymanQuote(args) : humbleQuote(args);
+}
+function executeSwap(args) {
+  return args.chain === 'algorand' ? tinymanSwap(args) : humbleSwap(args);
+}
+function makeAlgoSigner(account, chain = 'voi') {
+  return chain === 'algorand' ? tinymanSigner(account) : humbleSigner(account);
+}
 import { createPosition, updatePosition } from './lib/positions.mjs';
 import { sendTelegram, log } from './lib/notify.mjs';
 import { config } from './lib/env.mjs';
@@ -118,8 +130,9 @@ export async function openLoop({
         amountBaseUnits: borrowBaseUnits,
         slippagePct,
         chain,
-        walletAddress: account.addr,
+        walletAddress: account.addr.toString(),
         signCallback:  signer,
+        account,
       });
       txids.push({ loop: step.loop, action: 'swap', txid: swapTxid });
       log(`    [${step.loop}] Swap tx: ${swapTxid}`);
@@ -223,8 +236,9 @@ export async function unwindLoop({ positionId, chain, dryRun = false }) {
       amountBaseUnits: swapInBase,
       slippagePct:    config.defaultSlippage,
       chain,
-      walletAddress:  account.addr,
+      walletAddress:  account.addr.toString(),
       signCallback:   signer,
+      account,
     });
     txids.push({ step: i + 1, action: 'swap', txid: swapTxid });
     await sleep(STEP_DELAY_MS);
